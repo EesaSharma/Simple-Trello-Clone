@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Known Issues</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .issue {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .issue:hover {
+            background-color: #f0f8ff;
+        }
+
+        .issue-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .issue-details {
+            font-size: 14px;
+            color: #777;
+        }
+.back-btn {
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .back-btn:hover {
+            background-color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+<button class="back-btn" onclick="back()">Back</button>
+        <h1>Known Issues</h1>
+<p>DISCLAIMER:</p>
+<p>This application is not intended for practical use in tracking the progress of a project or for day-to-day activities. It was created solely as a homework assignment and does not undergo active development or maintenance. I do not guarantee bug fixes or additional features for this application. Please use it at your own discretion.
+</p>
+<div id="issues"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadIssues();
+        });
+
+        function loadIssues() {
+            const issues = [
+                { title: 'Issue 1', details: 'You can drop a task onto a task for some reason. That should not be possible. You are supposed to be able to drop a task the Done category. Buttons will also respond oddly.' },
+                { title: 'Issue 2', details: 'The background will change when you put a new link, but it wont load it again proberly, you have to press the button again, but it stores the url in the box.' },
+                { title: 'Issue 3', details: 'It loads oddly sometimes. It automatically saves the data, but it sometimes wont load it again.' },
+            ];
+
+            const issuesContainer = document.getElementById('issues');
+            issues.forEach(issue => {
+                const issueElement = createIssueElement(issue.title, issue.details);
+                issuesContainer.appendChild(issueElement);
+            });
+        }
+
+        function createIssueElement(title, details) {
+            const issueElement = document.createElement('div');
+            issueElement.className = 'issue';
+            issueElement.innerHTML = `
+                <div class="issue-title">${title}</div>
+                <div class="issue-details">${details}</div>
+            `;
+            return issueElement;
+        }
+
+function back() {           
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
