@@ -1,0 +1,338 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trello Clone</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .board {
+            display: flex;
+            gap: 20px;
+        }
+
+        .list {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .task {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        .task:hover {
+            background-color: #f0f8ff;
+        }
+
+        .task input {
+            border: none;
+            outline: none;
+            width: 80%;
+        }
+
+        .task-date {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .remove-btn {
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .remove-btn:hover {
+            background-color: #d9534f;
+        }
+
+        .add-task-btn,
+        .change-bg-btn,
+        .clear-btn {
+            background-color: #5bc0de;
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .add-task-btn:hover,
+        .change-bg-btn:hover,
+        .clear-btn:hover {
+            background-color: #46b8da;
+        }
+
+        .clear-btn {
+            margin-right: 10px;
+        }
+
+        .bg-input {
+            margin-right: 10px;
+            width: 60%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .bg-input,
+        .change-bg-btn {
+            vertical-align: middle;
+        }
+
+.issues-btn {
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .issues-btn:hover {
+            background-color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="board" id="board"></div>
+        <div>
+            <label for="bg-input">Background Image URL:</label>
+            <input type="text" id="bg-input" class="bg-input" placeholder="Enter image URL">
+            <button class="change-bg-btn" onclick="changeBackground()">Change Background</button>
+            <button class="clear-btn" onclick="clearStorage()">Clear Storage</button>
+	    <button class="issues-btn" onclick="redirToIssues()">Issues</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            renderBoard();
+            loadTasks();
+            loadBackground();
+        });
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+
+            // Sample lists
+            const lists = ['To Do', 'In Progress', 'Done'];
+
+            lists.forEach(listName => {
+                const list = document.createElement('div');
+                list.className = 'list';
+                list.innerHTML = `
+                    <div class="list-header">
+                        <span>${listName}</span>
+                        <button class="add-task-btn" onclick="addTask('${listName}')">Add Task</button>
+                    </div>
+                    <div id="${listName.replace(/\s+/g, '-').toLowerCase()}" class="tasks" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                `;
+                board.appendChild(list);
+            });
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function dragStart(event, task, sourceList) {
+            event.dataTransfer.setData('text/plain', task);
+            event.dataTransfer.setData('text/plain', sourceList);
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const taskText = event.dataTransfer.getData('text/plain');
+            const sourceList = event.dataTransfer.getData('text/plain');
+            const taskElement = createTaskElement(taskText, sourceList);
+
+            // If the task is dropped onto the "Done" list, update the task's parent list
+            if (event.target.id === 'done') {
+                taskElement.addEventListener('click', () => moveTaskToDone(taskElement, sourceList));
+            }
+
+            event.target.appendChild(taskElement);
+            saveTasks();
+        }
+
+        function addTask(listName) {
+            const taskText = prompt(`Enter task for ${listName}:`);
+            if (taskText) {
+                const taskElement = createTaskElement(taskText, listName);
+                const tasksContainer = document.getElementById(listName.replace(/\s+/g, '-').toLowerCase());
+                tasksContainer.appendChild(taskElement);
+                saveTasks();
+            }
+        }
+
+        function createTaskElement(taskText, listName) {
+            const taskElement = document.createElement('div');
+            taskElement.className = 'task';
+            taskElement.draggable = true;
+            taskElement.innerHTML = `
+                <div>${getTaskWithNumber(taskText, listName)}</div>
+                <div class="task-date">${getCurrentDate()}</div>
+                ${listName === 'Done' ? '' : '<button class="remove-btn" onclick="removeTask(this.parentNode)">Remove</button>'}
+            `;
+            taskElement.addEventListener('dragstart', (e) => dragStart(e, taskText, listName));
+            return taskElement;
+        }
+
+        function removeTask(taskElement) {
+            if (confirm('Are you sure you want to remove this task?')) {
+                taskElement.parentNode.removeChild(taskElement);
+                saveTasks();
+            }
+        }
+
+        function moveTaskToDone(taskElement, sourceList) {
+            if (sourceList !== 'Done') {
+                const doneList = document.getElementById('done');
+                doneList.appendChild(taskElement);
+                saveTasks();
+            }
+        }
+
+        function getTaskWithNumber(taskText, listName) {
+            const tasksContainer = document.getElementById(listName.replace(/\s+/g, '-').toLowerCase());
+            const existingTasks = tasksContainer.querySelectorAll('.task');
+            const taskNumber = existingTasks.length + 1;
+            return `${taskNumber}. ${taskText}`;
+        }
+
+        function getCurrentDate() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return now.toLocaleDateString(undefined, options);
+        }
+
+        function saveTasks() {
+            const tasks = {};
+            const lists = document.querySelectorAll('.list');
+            lists.forEach(list => {
+                const listName = list.querySelector('.list-header span').textContent;
+                const tasksContainer = list.querySelector('.tasks');
+                const taskElements = tasksContainer.querySelectorAll('.task');
+                tasks[listName] = Array.from(taskElements).map(task => task.innerHTML);
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('tasks');
+            if (savedTasks) {
+                const tasks = JSON.parse(savedTasks);
+                Object.keys(tasks).forEach(listName => {
+                    const tasksContainer = document.getElementById(listName.replace(/\s+/g, '-').toLowerCase());
+                    tasks[listName].forEach(taskHTML => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task';
+                        taskElement.draggable = true;
+                        taskElement.innerHTML = taskHTML;
+                        taskElement.addEventListener('dragstart', (e) => {
+                            const taskText = taskHTML.split('</div>')[0].replace(/^\d+\.\s/, '');
+                            dragStart(e, taskText, listName);
+                        });
+                        tasksContainer.appendChild(taskElement);
+                    });
+                });
+            }
+        }
+
+        function loadBackground() {
+            const savedBackground = localStorage.getItem('background');
+            const defaultBackground = 'url("https://th.bing.com/th/id/R.46c0afcbc3269a36ef167a0b056fb788?rik=J76uLrHg09P%2fRw&pid=ImgRaw&r=0")'; // Replace with your default image URL
+
+            document.body.style.backgroundImage = savedBackground || defaultBackground;
+
+            if (savedBackground) {
+                document.getElementById('bg-input').value = savedBackground;
+            } else {
+                document.getElementById('bg-input').placeholder = 'Enter image URL';
+            }
+        }
+
+        function clearStorage() {
+            if (confirm('Are you sure you want to clear all tasks?')) {
+                const doneList = document.getElementById('done');
+                const defaultTask = doneList.querySelector('.default-task');
+                doneList.innerHTML = '';
+                if (defaultTask) {
+                    doneList.appendChild(defaultTask);
+                }
+                localStorage.removeItem('tasks');
+                localStorage.removeItem('background');
+                location.reload();
+            }
+        }
+
+       function changeBackground() {
+    const bgInput = document.getElementById('bg-input');
+    const imageUrl = bgInput.value.trim();
+
+    if (imageUrl) {
+        document.body.style.backgroundImage = `url('${imageUrl}')`;
+        localStorage.setItem('background', imageUrl);
+    } else {
+        alert('Please enter a valid image URL.');
+    }
+}
+
+function redirToIssues() {
+            window.location.href = 'issues.html';
+        }
+    </script>
+</body>
+</html>
